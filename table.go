@@ -7,7 +7,7 @@ import (
 	"strconv"
 	"strings"
 
-	r "github.com/gocassa/gocassa/reflect"
+	r "github.com/dreyk/gocassa/reflect"
 )
 
 type t struct {
