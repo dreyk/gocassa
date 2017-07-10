@@ -154,14 +154,15 @@ func (o *badOp) QueryExecutor() QueryExecutor {
 //////
 
 func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
+	mopt := o.f.t.options.Merge(opt)
 	var str string
 	var vals []interface{}
 	switch o.opType {
 	case updateOpType:
-		stmt, uvals := updateStatement(o.f.t.keySpace.name, o.f.t.Name(), o.m, o.f.t.options.Merge(opt))
+		stmt, uvals := updateStatement(o.f.t.keySpace.name, o.f.t.Name(), o.m, mopt)
 		whereStmt, whereVals := generateWhere(o.f.rs)
 		str = stmt + whereStmt
-		if !opt.InsertOnUpdate{
+		if !mopt.InsertOnUpdate{
 			str = str + " IF EXISTS"
 		}
 		vals = append(uvals, whereVals...)
@@ -170,7 +171,7 @@ func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
 		str = fmt.Sprintf("DELETE FROM %s.%s%s", o.f.t.keySpace.name, o.f.t.Name(), str)
 	case insertOpType:
 		fields, insertVals := keyValues(o.m)
-		str = insertStatement(o.f.t.keySpace.name, o.f.t.Name(), fields, o.f.t.options.Merge(opt))
+		str = insertStatement(o.f.t.keySpace.name, o.f.t.Name(), fields, mopt)
 		vals = insertVals
 	}
 	if o.f.t.keySpace.debugMode {

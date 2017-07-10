@@ -53,7 +53,7 @@ type Options struct {
 	// Setting CompactStorage to true enables table creation with compact storage
 	CompactStorage bool
 	// Compressor specifies the compressor (if any) to use on a newly created table
-	Compressor       string
+	Compressor     string
 	InsertOnUpdate bool
 }
 
@@ -67,6 +67,10 @@ func (o Options) Merge(neu Options) Options {
 		Select:          o.Select,
 		CompactStorage:  o.CompactStorage,
 		Compressor:      o.Compressor,
+		InsertOnUpdate:  o.InsertOnUpdate,
+	}
+	if neu.InsertOnUpdate {
+		ret.InsertOnUpdate = neu.InsertOnUpdate
 	}
 	if neu.TTL != time.Duration(0) {
 		ret.TTL = neu.TTL
