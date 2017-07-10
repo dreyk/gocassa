@@ -53,7 +53,8 @@ type Options struct {
 	// Setting CompactStorage to true enables table creation with compact storage
 	CompactStorage bool
 	// Compressor specifies the compressor (if any) to use on a newly created table
-	Compressor string
+	Compressor       string
+	InsertOnUpdate bool
 }
 
 // Returns a new Options which is a right biased merge of the two initial Options.

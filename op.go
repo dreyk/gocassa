@@ -161,6 +161,9 @@ func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
 		stmt, uvals := updateStatement(o.f.t.keySpace.name, o.f.t.Name(), o.m, o.f.t.options.Merge(opt))
 		whereStmt, whereVals := generateWhere(o.f.rs)
 		str = stmt + whereStmt
+		if !opt.InsertOnUpdate{
+			str = str + " IF EXISTS"
+		}
 		vals = append(uvals, whereVals...)
 	case deleteOpType:
 		str, vals = generateWhere(o.f.rs)
