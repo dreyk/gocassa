@@ -18,6 +18,7 @@ const (
 	deleteOpType
 	updateOpType
 	insertOpType
+	insertUpdateOpType
 )
 
 type singleOp struct {
@@ -93,7 +94,7 @@ func (w *singleOp) write() error {
 
 func (o *singleOp) Run() error {
 	switch o.opType {
-	case updateOpType, insertOpType, deleteOpType:
+	case updateOpType, insertOpType, deleteOpType, insertUpdateOpType:
 		return o.write()
 	case readOpType:
 		return o.read()
@@ -109,7 +110,7 @@ func (o *singleOp) RunAtomically() error {
 
 func (o *singleOp) GenerateStatement() (string, []interface{}) {
 	switch o.opType {
-	case updateOpType, insertOpType, deleteOpType:
+	case updateOpType, insertOpType, deleteOpType, insertUpdateOpType:
 		return o.generateWrite(o.options)
 	case readOpType, singleReadOpType:
 		return o.generateRead(o.options)
@@ -165,6 +166,11 @@ func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
 		if !mopt.InsertOnUpdate{
 			str = str + " IF EXISTS"
 		}
+		vals = append(uvals, whereVals...)
+	case insertUpdateOpType:
+		stmt, uvals := updateStatement(o.f.t.keySpace.name, o.f.t.Name(), o.m, mopt)
+		whereStmt, whereVals := generateWhere(o.f.rs)
+		str = stmt + whereStmt
 		vals = append(uvals, whereVals...)
 	case deleteOpType:
 		str, vals = generateWhere(o.f.rs)

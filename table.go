@@ -176,7 +176,7 @@ func (t t) Set(i interface{}) Op {
 	return newWriteOp(t.keySpace.qe, filter{
 		t:  t,
 		rs: rels,
-	}, updateOpType, updFields)
+	}, insertUpdateOpType, updFields)
 }
 
 func (t t) Create() error {
