@@ -2,6 +2,7 @@ package gocassa
 
 import (
 	"errors"
+	"fmt"
 
 	"github.com/gocql/gocql"
 )
@@ -29,10 +30,29 @@ func (cb goCQLBackend) Query(stmt string, vals ...interface{}) ([]map[string]int
 	return cb.QueryWithOptions(Options{}, stmt, vals...)
 }
 
+type GSimpleRetryPolicy struct {
+	NumRetries int //Number of times to retry a query
+}
+
+func (s *GSimpleRetryPolicy) Attempt(q gocql.RetryableQuery) bool {
+	fmt.Println("Retry Update Attempts: ", q.Attempts())
+	return q.Attempts() <= s.NumRetries
+}
+
+func (s *GSimpleRetryPolicy) GetRetryType(err error) gocql.RetryType {
+	return gocql.Retry
+}
+
 func (cb goCQLBackend) ExecuteWithOptions(opts Options, stmt string, vals ...interface{}) error {
 	qu := cb.session.Query(stmt, vals...)
 	if opts.Consistency != nil {
 		qu = qu.Consistency(*opts.Consistency)
+	}
+	if opts.CAS {
+		qu.RetryPolicy(&GSimpleRetryPolicy{
+			NumRetries: 3,
+		})
+		return qu.Exec()
 	}
 	return qu.Exec()
 }

@@ -88,8 +88,10 @@ func (w *singleOp) readOne() error {
 }
 
 func (w *singleOp) write() error {
-	stmt, params := w.generateWrite(w.options)
-	return w.qe.ExecuteWithOptions(w.options, stmt, params...)
+	stmt, params, cas := w.generateWrite(w.options)
+	opt := w.options
+	opt.CAS = cas
+	return w.qe.ExecuteWithOptions(opt, stmt, params...)
 }
 
 func (o *singleOp) Run() error {
@@ -111,7 +113,8 @@ func (o *singleOp) RunAtomically() error {
 func (o *singleOp) GenerateStatement() (string, []interface{}) {
 	switch o.opType {
 	case updateOpType, insertOpType, deleteOpType, insertUpdateOpType:
-		return o.generateWrite(o.options)
+		v1, v2, _ := o.generateWrite(o.options)
+		return v1, v2
 	case readOpType, singleReadOpType:
 		return o.generateRead(o.options)
 	}
@@ -154,7 +157,8 @@ func (o *badOp) QueryExecutor() QueryExecutor {
 
 //////
 
-func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
+func (o *singleOp) generateWrite(opt Options) (string, []interface{}, bool) {
+	cas := false
 	mopt := o.f.t.options.Merge(opt)
 	var str string
 	var vals []interface{}
@@ -163,7 +167,8 @@ func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
 		stmt, uvals := updateStatement(o.f.t.keySpace.name, o.f.t.Name(), o.m, mopt)
 		whereStmt, whereVals := generateWhere(o.f.rs)
 		str = stmt + whereStmt
-		if !mopt.InsertOnUpdate{
+		if !mopt.InsertOnUpdate {
+			cas = true
 			str = str + " IF EXISTS"
 		}
 		vals = append(uvals, whereVals...)
@@ -183,7 +188,7 @@ func (o *singleOp) generateWrite(opt Options) (string, []interface{}) {
 	if o.f.t.keySpace.debugMode {
 		fmt.Println(str, vals)
 	}
-	return str, vals
+	return str, vals, cas
 }
 
 func (o *singleOp) generateRead(opt Options) (string, []interface{}) {

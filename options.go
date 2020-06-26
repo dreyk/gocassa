@@ -55,6 +55,7 @@ type Options struct {
 	// Compressor specifies the compressor (if any) to use on a newly created table
 	Compressor     string
 	InsertOnUpdate bool
+	CAS            bool
 }
 
 // Returns a new Options which is a right biased merge of the two initial Options.

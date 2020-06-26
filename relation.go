@@ -12,6 +12,7 @@ const (
 	greaterThanOrEquals
 	lesserThan
 	lesserThanOrEquals
+	containsKey
 )
 
 type Relation struct {
@@ -36,6 +37,8 @@ func (r Relation) cql() (string, []interface{}) {
 		ret = key + " < ?"
 	case lesserThanOrEquals:
 		ret = key + " <= ?"
+	case containsKey:
+		ret = r.key + " CONTAINS KEY ?"
 	}
 	return ret, r.terms
 }
@@ -65,6 +68,9 @@ func (r Relation) accept(i interface{}) bool {
 	var result bool
 	var err error
 
+	if r.op == containsKey {
+		return true
+	}
 	if r.op == equality || r.op == in {
 		return anyEquals(i, r.terms)
 	}
@@ -134,6 +140,14 @@ func LT(key string, term interface{}) Relation {
 func LTE(key string, term interface{}) Relation {
 	return Relation{
 		op:    lesserThanOrEquals,
+		key:   key,
+		terms: toI(term),
+	}
+}
+
+func ContainsKey(key string, term interface{}) Relation {
+	return Relation{
+		op:    containsKey,
 		key:   key,
 		terms: toI(term),
 	}
